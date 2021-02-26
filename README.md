@@ -51,6 +51,12 @@ To use the stacked template, use `FiltersSummary::make()->stacked()`.
 
 ---
 
+## Translation
+
+To translate the three used words: active, filter, and filters, simply translate them using Laravel [`$lang.json`](https://laravel.com/docs/8.x/localization#introduction) file.
+
+---
+
 ## Custom Filter Summary Resolvers
 
 The plugin knows how to display the information of the default Nova filters, but you might need to use custom filters. In that case, you'll probably need to create a custom template for the filter summary.
