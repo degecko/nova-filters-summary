@@ -57,56 +57,76 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   props: {
+    card: {},
     resourceName: {
       type: String,
       required: true
     }
   },
-  computed: {
-    activeFilters: function activeFilters() {
+  data: function data() {
+    return {
+      activeFilters: []
+    };
+  },
+  methods: {
+    watchForFilterChanges: function watchForFilterChanges() {
       var _this = this;
 
-      return _.cloneDeep(this.$store.getters["".concat(this.resourceName, "/filters")]).filter(function (filter) {
+      this.$watch(function () {
+        return _this.$store.getters["".concat(_this.resourceName, "/filters")];
+      }, this.getActiveFilters, {
+        deep: true
+      });
+    },
+    getActiveFilters: function getActiveFilters() {
+      var _this2 = this;
+
+      var filters = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.$store.getters["".concat(this.resourceName, "/filters")];
+      this.activeFilters = _.cloneDeep(filters).filter(function (filter) {
         return !!filter.currentValue;
       }).map(function (filter) {
-        if (filter.component === 'select-filter') {
+        if (Nova.filtersSummaryResolvers[filter.component]) {
+          filter.summary = Nova.filtersSummaryResolvers[filter.component](filter);
+        } else if (filter.component === 'select-filter') {
           var _filter$options$find;
 
           filter.summary = (_filter$options$find = filter.options.find(function (o) {
-            return o.value == filter.currentValue;
+            return _this2.nin(o.value) === _this2.nin(filter.currentValue);
           })) === null || _filter$options$find === void 0 ? void 0 : _filter$options$find.name;
-        } else if (filter.component === 'date-range-filter') {
-          if (filter.currentValue.from && filter.currentValue.to) {
-            var from = filter.currentValue.from.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1');
-            var to = filter.currentValue.to.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1');
-            filter.summary = [from, _this.__('To'), to].join(' ');
-          } else if (filter.currentValue.from) {
-            var _from = filter.currentValue.from.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1');
-
-            filter.summary = "Apr\xE8s ".concat(_from);
-          } else if (filter.currentValue.to) {
-            var _to = filter.currentValue.to.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1');
-
-            filter.summary = "jusqu'\xE0 ".concat(_to);
-          }
-        } else if (filter.component === 'numeric-range-filter') {
-          filter.summary = [filter.currentValue.from, filter.currentValue.to].join(' — ');
-        }
+        } else filter.summary = filter.currentValue || 'N/A';
 
         return filter;
       });
-    }
-  },
-  methods: {
+    },
+    nin: function nin(maybeNumber) {
+      return isNaN(maybeNumber) ? maybeNumber : Number(maybeNumber);
+    },
     del: function del(filter) {
       var _$defaults;
 
+      // Reset the filter's value.
       this.$store.commit("".concat(this.resourceName, "/updateFilterState"), {
         filterClass: filter["class"],
         value: ''
-      });
+      }); // Get the active filters excluding the current one.
+
       var activeFilters = this.activeFilters.filter(function (f) {
         return f["class"] !== filter["class"];
       }).map(function (f) {
@@ -114,11 +134,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           "class": f["class"],
           value: f.currentValue
         };
-      });
+      }); // Remove the current filter from the URL.
+
       this.$router.push({
         query: _.defaults((_$defaults = {}, _defineProperty(_$defaults, "".concat(this.resourceName, "_page"), 1), _defineProperty(_$defaults, "".concat(this.resourceName, "_filter"), btoa(JSON.stringify(activeFilters))), _$defaults), this.$root.$route.query)
       });
     }
+  },
+  created: function created() {
+    this.getActiveFilters();
+    this.watchForFilterChanges();
   }
 });
 
@@ -141,7 +166,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, ".filters-summary-card h3 span {\n  position: relative;\n  top: 1px;\n}\n.filters-summary-card .remove-filter {\n  width: 24px;\n  height: 24px;\n}", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, ".filters-summary-card h3 span {\n  position: relative;\n  top: 1px;\n}\n.filters-summary-card .remove-filter {\n  width: 22px;\n  height: 22px;\n}\n.filters-summary-card .fsc-filter em {\n  opacity: 0.25;\n}", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -666,10 +691,12 @@ var render = function() {
               "\n            " +
                 _vm._s(_vm.activeFilters.length) +
                 "\n            " +
-                _vm._s(_vm.__("active")) +
+                _vm._s(_vm.card.labels.active) +
                 "\n            " +
                 _vm._s(
-                  _vm.__(_vm.activeFilters.length === 1 ? "filter" : "filters")
+                  _vm.activeFilters.length === 1
+                    ? _vm.card.labels.filter
+                    : _vm.card.labels.filters
                 ) +
                 "\n        "
             )
@@ -684,23 +711,42 @@ var render = function() {
               "div",
               {
                 staticClass:
-                  "flex align-items-center bg-white shadow px-1 py-1 rounded rounded-full mr-2 mb-2"
+                  "fsc-filter flex bg-white shadow px-1 py-1 mr-2 mb-2",
+                class: _vm.card.stacked
+                  ? "rounded"
+                  : "rounded-full align-items-center"
               },
               [
-                _c("div", { staticClass: "pl-2" }, [
-                  _vm._v(_vm._s(filter.name) + ":")
-                ]),
-                _vm._v(" "),
-                _c("div", { staticClass: "ml-2 font-bold" }, [
-                  _vm._v(_vm._s(filter.summary || filter.currentValue || "N/A"))
-                ]),
+                _vm.card.stacked
+                  ? [
+                      _c("div", { staticClass: "p-1" }, [
+                        _c("div", { staticClass: "text-sm font-bold mb-1" }, [
+                          _vm._v(_vm._s(filter.name))
+                        ]),
+                        _vm._v(" "),
+                        _c("div", {
+                          domProps: { innerHTML: _vm._s(filter.summary) }
+                        })
+                      ])
+                    ]
+                  : [
+                      _c("div", { staticClass: "pl-2" }, [
+                        _vm._v(_vm._s(filter.name) + ":")
+                      ]),
+                      _vm._v(" "),
+                      _c("div", {
+                        staticClass: "ml-2 font-bold",
+                        domProps: { innerHTML: _vm._s(filter.summary) }
+                      })
+                    ],
                 _vm._v(" "),
                 _c("div", { staticClass: "ml-2" }, [
                   _c(
                     "div",
                     {
                       staticClass:
-                        "remove-filter flex align-items-center justify-center font-bold bg-40 rounded rounded-full cursor-pointer hover:text-white hover:bg-90",
+                        "remove-filter flex align-items-center justify-center font-bold bg-40 cursor-pointer hover:text-white hover:bg-90",
+                      class: _vm.card.stacked ? "rounded" : "rounded-full",
                       on: {
                         click: function($event) {
                           return _vm.del(filter)
@@ -710,7 +756,8 @@ var render = function() {
                     [_vm._v("×")]
                   )
                 ])
-              ]
+              ],
+              2
             )
           }),
           0
@@ -911,8 +958,9 @@ var __webpack_exports__ = {};
 /*!******************************!*\
   !*** ./resources/js/card.js ***!
   \******************************/
+Nova.filtersSummaryResolvers = {};
 Nova.booting(function (Vue, router, store) {
-  Vue.component('nova-filters-summary', __webpack_require__(/*! ./FiltersSummary */ "./resources/js/FiltersSummary.vue"));
+  Vue.component('nova-filters-summary', __webpack_require__(/*! ./FiltersSummary */ "./resources/js/FiltersSummary.vue").default);
 });
 })();
 

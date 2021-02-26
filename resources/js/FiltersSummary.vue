@@ -5,20 +5,29 @@
 
             <span class="ml-2">
                 {{ activeFilters.length }}
-                {{ __('active') }}
-                {{ __(activeFilters.length === 1 ? 'filter' : 'filters') }}
+                {{ card.labels.active }}
+                {{ activeFilters.length === 1 ? card.labels.filter : card.labels.filters }}
             </span>
         </h3>
 
         <div class="flex flex-wrap">
-            <div class="flex align-items-center bg-white shadow px-1 py-1 rounded rounded-full mr-2 mb-2"
+            <div class="fsc-filter flex bg-white shadow px-1 py-1 mr-2 mb-2"
+                 :class="card.stacked ? 'rounded' : 'rounded-full align-items-center'"
                  v-for="filter in activeFilters">
-                <div class="pl-2">{{ filter.name }}:</div>
+                <template v-if="card.stacked">
+                    <div class="p-1">
+                        <div class="text-sm font-bold mb-1">{{ filter.name }}</div>
+                        <div v-html="filter.summary"></div>
+                    </div>
+                </template>
 
-                <div class="ml-2 font-bold">{{ filter.summary || filter.currentValue || 'N/A' }}</div>
+                <template v-else>
+                    <div class="pl-2">{{ filter.name }}:</div>
+                    <div class="ml-2 font-bold" v-html="filter.summary"></div>
+                </template>
 
                 <div class="ml-2">
-                    <div class="remove-filter flex align-items-center justify-center font-bold bg-40 rounded rounded-full cursor-pointer hover:text-white hover:bg-90" @click="del(filter)">&times;</div>
+                    <div class="remove-filter flex align-items-center justify-center font-bold bg-40 cursor-pointer hover:text-white hover:bg-90" :class="card.stacked ? 'rounded' : 'rounded-full'" @click="del(filter)">&times;</div>
                 </div>
             </div>
         </div>
@@ -35,8 +44,14 @@
     }
 
     .remove-filter {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
+    }
+
+    .fsc-filter {
+        em {
+            opacity: .25;
+        }
     }
 }
 </style>
@@ -44,55 +59,65 @@
 <script>
 export default {
     props: {
+        card: {},
+
         resourceName: {
             type: String,
             required: true,
         },
     },
 
-    computed: {
-        activeFilters () {
-            return _.cloneDeep(this.$store.getters[`${this.resourceName}/filters`])
+    data () {
+        return {
+            activeFilters: [],
+        }
+    },
+
+    methods: {
+        watchForFilterChanges () {
+            this.$watch(
+                () => this.$store.getters[`${this.resourceName}/filters`],
+                this.getActiveFilters,
+                { deep: true }
+            )
+        },
+
+        getActiveFilters (filters = this.$store.getters[`${this.resourceName}/filters`]) {
+            this.activeFilters = _.cloneDeep(filters)
                 .filter(filter => !! filter.currentValue)
                 .map(filter => {
-                    if (filter.component === 'select-filter') {
-                        filter.summary = filter.options.find(o => o.value == filter.currentValue)?.name
-                    } else if (filter.component === 'date-range-filter') {
-                        if (filter.currentValue.from && filter.currentValue.to) {
-                            const from = filter.currentValue.from.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1')
-                            const to = filter.currentValue.to.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1')
-
-                            filter.summary = [from, this.__('To'), to].join(' ')
-                        } else if (filter.currentValue.from) {
-                            const from = filter.currentValue.from.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1')
-
-                            filter.summary = `Après ${from}`
-                        } else if (filter.currentValue.to) {
-                            const to = filter.currentValue.to.replace(/(\d{4})-(\d\d)-(\d\d)/, '$3.$2.$1')
-
-                            filter.summary = `jusqu'à ${to}`
-                        }
-                    } else if (filter.component === 'numeric-range-filter') {
-                        filter.summary = [filter.currentValue.from, filter.currentValue.to].join(' — ')
+                    if (Nova.filtersSummaryResolvers[filter.component]) {
+                        filter.summary = Nova.filtersSummaryResolvers[filter.component](filter)
                     }
+
+                    else if (filter.component === 'select-filter') {
+                        filter.summary = filter.options
+                            .find(o => this.nin(o.value) === this.nin(filter.currentValue))?.name
+                    }
+
+                    else filter.summary = filter.currentValue || 'N/A'
 
                     return filter
                 })
         },
-    },
 
-    methods: {
+        nin (maybeNumber) {
+            return isNaN(maybeNumber) ? maybeNumber : Number(maybeNumber)
+        },
+
         del (filter) {
+            // Reset the filter's value.
             this.$store.commit(`${this.resourceName}/updateFilterState`, {
                 filterClass: filter.class,
                 value: '',
             })
 
-            const activeFilters = this.activeFilters.filter(f => f.class !== filter.class).map(f => ({
-                class: f.class,
-                value: f.currentValue,
-            }))
+            // Get the active filters excluding the current one.
+            const activeFilters = this.activeFilters
+                .filter(f => f.class !== filter.class)
+                .map(f => ({ class: f.class, value: f.currentValue }))
 
+            // Remove the current filter from the URL.
             this.$router.push({
                 query: _.defaults({
                     [`${this.resourceName}_page`]: 1,
@@ -100,6 +125,11 @@ export default {
                 }, this.$root.$route.query)
             })
         },
+    },
+    
+    created () {
+        this.getActiveFilters()
+        this.watchForFilterChanges()
     },
 }
 </script>
