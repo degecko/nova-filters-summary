@@ -1,6 +1,6 @@
 # Laravel Nova Filters Summary
 
-A custom Card component for [Laravel Nova](https://nova.laravel.com/) which displays a summary of the active filters for a specific resource.
+A custom Card component for [Laravel Nova](https://nova.laravel.com/) which displays a summary of the active filters for a specific resource or lens.
 
 Default Preview:
 
@@ -30,6 +30,7 @@ Add it to the array returned by the `cards` method inside a Nova Resource or Len
 namespace App\Nova;
 
 use Degecko\NovaFiltersSummary\FiltersSummary;
+use Illuminate\Http\Request;
 
 class Product extends Resource
 {
