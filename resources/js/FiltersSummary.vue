@@ -84,7 +84,23 @@ export default {
 
         getActiveFilters (filters = this.$store.getters[`${this.resourceName}/filters`]) {
             this.activeFilters = _.cloneDeep(filters)
-                .filter(filter => !! filter.currentValue)
+
+                .filter(filter => {
+                    if (filter.component === 'boolean-filter') {
+                        if (typeof filter.currentValue === 'object') {
+                            for (let id in filter.currentValue) {
+                                if (filter.currentValue.hasOwnProperty(id) && filter.currentValue[id]) {
+                                    return true
+                                }
+                            }
+                        }
+
+                        return false
+                    }
+
+                    return !! filter.currentValue
+                })
+
                 .map(filter => {
                     if (Nova.filtersSummaryResolvers[filter.component]) {
                         filter.summary = Nova.filtersSummaryResolvers[filter.component](filter)
@@ -95,8 +111,23 @@ export default {
                             .find(o => this.nin(o.value) === this.nin(filter.currentValue))?.name
                     }
 
-                    else filter.summary = filter.currentValue || 'N/A'
+                    else if (filter.component === 'boolean-filter') {
+                        const enabledValues = []
+                        const map = []
 
+                        filter.options.map(o => map[this.nin(o.value)] = o.name)
+
+                        for (let id in filter.currentValue) {
+                            if (filter.currentValue[id]) {
+                                enabledValues.push(map[id])
+                            }
+                        }
+
+                        filter.summary = enabledValues.length ? enabledValues.join(', ') : '<em>none</em>'
+                    }
+
+                    else filter.summary = filter.currentValue || 'N/A'
+                    
                     return filter
                 })
         },
