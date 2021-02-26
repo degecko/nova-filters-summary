@@ -1,0 +1,43 @@
+{
+    "name": "degecko/nova-filters-summary",
+    "description": "A Laravel Nova card which displays a summary of the active filters of a resource or lens.",
+    "keywords": [
+        "laravel",
+        "nova"
+    ],
+    "authors": [
+        {
+            "name": "Cosmin Gheorghita",
+            "email": "gecko.alpad@gmail.com",
+            "homepage": "https://gecko.dev"
+        }
+    ],
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://nova.laravel.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1.0",
+        "laravel/nova": ">=3.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Degecko\\NovaFiltersSummary\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Degecko\\NovaFiltersSummary\\CardServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
