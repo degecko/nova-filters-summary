@@ -142,7 +142,7 @@ export default {
                 Object.keys(filter.currentValue).map(key => {
                     filter.currentValue[key] = false
                 })
-                
+
                 clearValue = filter.currentValue
             }
 
