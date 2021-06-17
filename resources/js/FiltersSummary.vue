@@ -9,7 +9,6 @@
                 {{ activeFilters.length === 1 ? card.labels.filter : card.labels.filters }}
             </span>
         </h3>
-
         <div class="flex flex-wrap">
             <div class="fsc-filter flex bg-white shadow px-1 py-1 mr-2 mb-2"
                  :class="card.stacked ? 'rounded' : 'rounded-full align-items-center'"
@@ -137,23 +136,35 @@ export default {
         },
 
         del (filter) {
+            let clearValue = ''
+
+            if (filter.component === 'boolean-filter') {
+                Object.keys(filter.currentValue).map(key => {
+                    filter.currentValue[key] = false
+                })
+                
+                clearValue = filter.currentValue
+            }
+
             // Reset the filter's value.
             this.$store.commit(`${this.resourceName}/updateFilterState`, {
                 filterClass: filter.class,
-                value: '',
+                value: clearValue,
             })
 
             // Get the active filters excluding the current one.
-            const activeFilters = this.activeFilters
-                .filter(f => f.class !== filter.class)
-                .map(f => ({ class: f.class, value: f.currentValue }))
+            this.$nextTick(() => {
+                const activeFilters = this.activeFilters
+                    .filter(f => f.class !== filter.class)
+                    .map(f => ({ class: f.class, value: f.currentValue }))
 
-            // Remove the current filter from the URL.
-            this.$router.push({
-                query: _.defaults({
-                    [`${this.resourceName}_page`]: 1,
-                    [`${this.resourceName}_filter`]: btoa(JSON.stringify(activeFilters)),
-                }, this.$root.$route.query)
+                // Remove the current filter from the URL.
+                this.$router.push({
+                    query: _.defaults({
+                        [`${this.resourceName}_page`]: 1,
+                        [`${this.resourceName}_filter`]: btoa(JSON.stringify(activeFilters)),
+                    }, this.$root.$route.query)
+                })
             })
         },
     },
