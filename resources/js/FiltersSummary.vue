@@ -96,6 +96,11 @@ export default {
 
                         return false
                     }
+                    
+                    // If we have an empty array, consider the filter disabled
+                    if ( Array.isArray( filter.currentValue ) ) {
+                        return filter.currentValue.length;
+                    }
 
                     return !! filter.currentValue
                 })
