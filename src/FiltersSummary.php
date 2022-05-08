@@ -61,11 +61,13 @@ class FiltersSummary extends Card
     /**
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return array_merge([
             'width' => $this->width,
             'labels' => $this->labels,
         ], parent::jsonSerialize());
     }
+
+    
 }
