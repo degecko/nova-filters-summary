@@ -9,20 +9,21 @@
                 {{ activeFilters.length === 1 ? card.labels.filter : card.labels.filters }}
             </span>
         </h3>
+
         <div class="flex flex-wrap">
             <div class="fsc-filter flex bg-white shadow px-1 py-1 mr-2 mb-2"
                  :class="card.stacked ? 'rounded' : 'rounded-full align-items-center'"
-                 v-for="filter in activeFilters">
+                 v-for="filter in activeFilters" :key="filter" >
                 <template v-if="card.stacked">
                     <div class="p-1">
                         <div class="text-sm font-bold mb-1">{{ filter.name }}</div>
-                        <div v-html="filter.summary"></div>
+                        <div v-html="filter.currentValue"></div>
                     </div>
                 </template>
 
                 <template v-else>
                     <div class="pl-2">{{ filter.name }}:</div>
-                    <div class="ml-2 font-bold" v-html="filter.summary"></div>
+                    <div class="ml-2 font-bold" v-html="filter.currentValue"></div>
                 </template>
 
                 <div class="ml-2">
@@ -71,6 +72,7 @@ export default {
             activeFilters: [],
         }
     },
+
 
     methods: {
         watchForFilterChanges () {
