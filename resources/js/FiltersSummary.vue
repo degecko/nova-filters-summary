@@ -161,12 +161,12 @@ export default {
                     .map(f => ({ class: f.class, value: f.currentValue }))
 
                 // Remove the current filter from the URL.
-                this.$router.push({
-                    query: _.defaults({
-                        [`${this.resourceName}_page`]: 1,
-                        [`${this.resourceName}_filter`]: btoa(JSON.stringify(activeFilters)),
-                    }, this.$root.$route.query)
-                })
+                // this.$router.push({
+                //     query: _.defaults({
+                //         [`${this.resourceName}_page`]: 1,
+                //         [`${this.resourceName}_filter`]: btoa(JSON.stringify(activeFilters)),
+                //     }, this.$root.$route.query)
+                // })
             })
         },
     },
@@ -175,5 +175,9 @@ export default {
         this.getActiveFilters()
         this.watchForFilterChanges()
     },
+
+    updated() {
+        return this.$el.classList.remove('min-h-40');
+    }
 }
 </script>
