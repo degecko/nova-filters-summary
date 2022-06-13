@@ -176,8 +176,8 @@ export default {
         this.watchForFilterChanges()
     },
 
-    updated() {
-        return this.$el.classList.remove('min-h-40');
-    }
+    // updated() {
+    //     return this.$el.classList.remove('min-h-40');
+    // }
 }
 </script>
