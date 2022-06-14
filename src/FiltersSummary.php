@@ -6,15 +6,11 @@ use Laravel\Nova\Card;
 
 class FiltersSummary extends Card
 {
-    /**
-     * @var string
-     */
+    public $component = 'nova-filters-summary';
+
     public $width = 'full';
 
-    /**
-     * @var array
-     */
-    protected $labels = [];
+    protected array $labels = [];
 
     /**
      * @param null|string $component
@@ -30,38 +26,19 @@ class FiltersSummary extends Card
         ];
     }
 
-    /**
-     * @return string
-     */
-    public function component()
-    {
-        return 'nova-filters-summary';
-    }
-
-    /**
-     * @param array $labels
-     * @return self
-     */
-    public function labels(array $labels)
+    public function labels(array $labels): static
     {
         $this->labels = $labels;
 
         return $this;
     }
 
-    /**
-     * @param false $stacked
-     * @return self
-     */
-    public function stacked($stacked = true)
+    public function stacked($stacked = true): static
     {
         return $this->withMeta(compact('stacked'));
     }
 
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return array_merge([
             'width' => $this->width,
