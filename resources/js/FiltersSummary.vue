@@ -178,6 +178,8 @@ export default {
         value: clearValue,
       });
 
+      this.$emit("change");
+
       // Get the active filters excluding the current one.
       this.$nextTick(() => {
         const activeFilters = this.activeFilters
