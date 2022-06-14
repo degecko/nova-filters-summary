@@ -33,13 +33,13 @@
         <template v-if="card.stacked">
           <div class="p-1">
             <div class="text-sm font-bold mb-1">{{ filter.name }}</div>
-            <div v-html="filter.currentValue"></div>
+            <div v-html="getCurrentValue(filter)"></div>
           </div>
         </template>
 
         <template v-else>
           <div class="pl-2">{{ filter.name }}:</div>
-          <div class="ml-2 font-bold" v-html="filter.currentValue"></div>
+          <div class="ml-2 font-bold" v-html="getCurrentValue(filter)"></div>
         </template>
 
         <div class="ml-2">
@@ -193,6 +193,16 @@ export default {
         // })
       });
     },
+    getCurrentValue(filter) {
+      
+
+      return _.find(filter.options, function (o) {
+        if (typeof o.value === "number") {
+          return o.value.toString() === filter.currentValue;
+        }
+        return o.value === filter.currentValue;
+      }).label;
+    },
   },
 
   created() {
@@ -201,7 +211,7 @@ export default {
   },
 
   updated() {
-    if (this.$el.classList && this.$el.classList.contains('min-h-40')) {
+    if (this.$el.classList && this.$el.classList.contains("min-h-40")) {
       return this.$el.classList.remove("min-h-40");
     }
   },
