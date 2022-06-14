@@ -16,8 +16,18 @@ Stacked Preview:
 
 Using [Composer](https://getcomposer.org/):
 
+For Nova 4, use the current version. For older ones, use v1 of this package.
+
+### Nova v4:
+
 ```
 composer require degecko/nova-filters-summary
+```
+
+### Nova v1-3:
+
+```
+composer require degecko/nova-filters-summary:^1.1.0
 ```
 
 ## Usage
