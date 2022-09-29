@@ -138,7 +138,7 @@ export default {
                 })
 
                 .map(f => {
-                    const filter = _.cloneDeep(f)
+                    const filter = JSON.parse(JSON.stringify(f))
                     
                     if (Nova.filtersSummaryResolvers.hasOwnProperty(filter.component)) {
                         filter.summary = Nova.filtersSummaryResolvers[filter.component](filter)
