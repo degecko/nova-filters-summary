@@ -197,8 +197,21 @@ export default {
         },
 
         async del (filter) {
+            let clearValue = ''
+
+            if (filter.component === 'boolean-filter') {
+                Object.keys(filter.currentValue).map(key => {
+                    filter.currentValue[key] = false
+                })
+
+                clearValue = filter.currentValue
+            }
+
             // Reset the filter's value.
-            await Nova.store.dispatch(`${this.resourceName}/resetFilterState`, this.original(filter))
+            await Nova.store.commit(`${this.resourceName}/updateFilterState`, {
+                filterClass: filter.class,
+                value: clearValue,
+            })
 
             // Get the active filters excluding the current one.
             const filters = this.filters.map(f => ({ [f.class]: f.currentValue }))

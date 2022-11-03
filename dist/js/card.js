@@ -111,15 +111,28 @@ var compiledSearchParams = null;
       return _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
         var _this2$updateQueryStr;
 
-        var filters;
+        var clearValue, filters;
         return _regeneratorRuntime().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
-                return Nova.store.dispatch("".concat(_this2.resourceName, "/resetFilterState"), _this2.original(filter));
+                clearValue = '';
 
-              case 2:
+                if (filter.component === 'boolean-filter') {
+                  Object.keys(filter.currentValue).map(function (key) {
+                    filter.currentValue[key] = false;
+                  });
+                  clearValue = filter.currentValue;
+                } // Reset the filter's value.
+
+
+                _context.next = 4;
+                return Nova.store.commit("".concat(_this2.resourceName, "/updateFilterState"), {
+                  filterClass: filter["class"],
+                  value: clearValue
+                });
+
+              case 4:
                 // Get the active filters excluding the current one.
                 filters = _this2.filters.map(function (f) {
                   return _defineProperty({}, f["class"], f.currentValue);
@@ -127,7 +140,7 @@ var compiledSearchParams = null;
 
                 _this2.updateQueryString((_this2$updateQueryStr = {}, _defineProperty(_this2$updateQueryStr, "".concat(_this2.resourceName, "_page"), 1), _defineProperty(_this2$updateQueryStr, "".concat(_this2.resourceName, "_filter"), window.btoa(JSON.stringify(filters))), _this2$updateQueryStr));
 
-              case 4:
+              case 6:
               case "end":
                 return _context.stop();
             }
