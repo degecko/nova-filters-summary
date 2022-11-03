@@ -27,8 +27,11 @@
                 </template>
 
                 <div class="ml-2">
-                    <BasicButton type="button"
-                                 class="remove-filter"
+                    <span v-if="original(filter).currentValue === filter.currentValue" class="text-xs mr-2 opacity-75">
+                        {{ card.labels.default || 'default' }}
+                    </span>
+
+                    <BasicButton v-else type="button" class="remove-filter"
                                  :class="card.stacked ? 'rounded' : 'rounded-full'"
                                  @click="del(filter)">
                         <span>&times;</span>
@@ -97,6 +100,10 @@
 </style>
 
 <script>
+import forEach from 'lodash/forEach'
+
+let compiledSearchParams = null
+
 export default {
     props: {
         card: {},
@@ -113,13 +120,20 @@ export default {
         }
     },
 
-    methods: {
-        getFilters () {
+    computed: {
+        filters () {
             return Nova.store.getters[`${this.resourceName}/filters`]
+        },
+    },
+
+    methods: {
+        original (filter) {
+            return Nova.store.getters[`${this.resourceName}/originalFilters`]
+                .find(f => f.class.endsWith(filter.class))
         },
 
         getActiveFilters () {
-            this.activeFilters = this.getFilters()
+            this.activeFilters = this.filters
 
                 .filter(filter => {
                     if (filter.component === 'boolean-filter') {
@@ -139,7 +153,7 @@ export default {
 
                 .map(f => {
                     const filter = JSON.parse(JSON.stringify(f))
-                    
+
                     if (Nova.filtersSummaryResolvers.hasOwnProperty(filter.component)) {
                         filter.summary = Nova.filtersSummaryResolvers[filter.component](filter)
                     }
@@ -150,7 +164,11 @@ export default {
 
                         delete filter.options
 
-                        filter.summary = option.hasOwnProperty('label') ? option.label : option.name
+                        if (option) {
+                            filter.summary = option.hasOwnProperty('label') ? option.label : option.name
+                        } else {
+                            filter.summary = '—'
+                        }
                     }
 
                     else if (filter.component === 'boolean-filter') {
@@ -169,7 +187,7 @@ export default {
                     }
 
                     else filter.summary = filter.currentValue || 'N/A'
-                    
+
                     return filter
                 })
         },
@@ -178,43 +196,47 @@ export default {
             return isNaN(maybeNumber) ? maybeNumber : Number(maybeNumber)
         },
 
-        del (filter) {
-            let clearValue = ''
-
-            if (filter.component === 'boolean-filter') {
-                Object.keys(filter.currentValue).map(key => {
-                    filter.currentValue[key] = false
-                })
-
-                clearValue = filter.currentValue
-            }
-
+        async del (filter) {
             // Reset the filter's value.
-            Nova.store.commit(`${this.resourceName}/updateFilterState`, {
-                filterClass: filter.class,
-                value: clearValue,
-            })
+            await Nova.store.dispatch(`${this.resourceName}/resetFilterState`, this.original(filter))
 
             // Get the active filters excluding the current one.
-            this.$nextTick(() => {
-                const filters = this.getFilters().map(f => ({ [f.class]: f.currentValue }))
+            const filters = this.filters.map(f => ({ [f.class]: f.currentValue }))
 
-                const qs = (location.search || '')
-                    .substr(1)
-                    .replace(new RegExp(`${this.resourceName}_page=\d+`),
-                            `${this.resourceName}_page=1`)
-                    .replace(new RegExp(`${this.resourceName}_filter=[^&]+`),
-                            `${this.resourceName}_filter=${encodeURIComponent(btoa(JSON.stringify(filters)))}`)
-
-                history.replaceState(null, null, `${location.origin}${location.pathname}?${qs}`)
+            this.updateQueryString({
+                [`${this.resourceName}_page`]: 1,
+                [`${this.resourceName}_filter`]: window.btoa(JSON.stringify(filters)),
             })
+        },
+
+        updateQueryString (value) {
+            let searchParams = new URLSearchParams(window.location.search)
+
+            forEach(value, (v, i) => {
+                searchParams.set(i, v || '')
+            })
+
+            if (compiledSearchParams !== searchParams.toString()) {
+                window.history.pushState(null, null, `${window.location.pathname}?${searchParams}`)
+
+                compiledSearchParams = searchParams.toString()
+            }
+
+            Nova.$emit('query-string-changed', searchParams)
+        },
+    },
+
+    watch: {
+        filters: {
+            deep: true,
+            handler () {
+                this.getActiveFilters()
+            },
         },
     },
 
     created () {
         this.getActiveFilters()
-
-        this.$watch(() => this.getFilters(), () => this.getActiveFilters(), { deep: true })
     },
 }
 </script>
